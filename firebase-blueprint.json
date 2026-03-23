@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "Integration": {
+      "title": "Integration",
+      "description": "A marketplace integration tool.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "longDescription": { "type": "string" },
+        "category": { "type": "string" },
+        "iconName": { "type": "string" },
+        "author": { "type": "string" },
+        "website": { "type": "string" },
+        "version": { "type": "string" }
+      },
+      "required": ["id", "name", "description", "category", "iconName"]
+    }
+  },
+  "firestore": {
+    "/integrations": {
+      "schema": "Integration",
+      "description": "A collection of available marketplace integrations."
+    }
+  }
+}

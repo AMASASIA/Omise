@@ -1,0 +1,62 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: integrations
+// Document ID: auto-generated or manual ID
+// Fields:
+//   - id: string (required) - unique identifier
+//   - name: string (required) - name of the integration
+//   - description: string (required) - description of the integration
+//   - category: string (required) - category code (e.g., COMM, DEV)
+//   - iconName: string (required) - name of the Lucide icon to use
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "avantamas@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidIntegration(data) {
+      return data.keys().hasAll(['id', 'name', 'description', 'category', 'iconName']) &&
+             data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 1000 &&
+             data.category is string && data.category.size() > 0 &&
+             data.iconName is string && data.iconName.size() > 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /integrations/{integrationId} {
+      // Publicly readable for authenticated users
+      allow read: if isAuthenticated();
+      
+      // Only admins can modify integrations
+      allow create: if isAdmin() && isValidIntegration(request.resource.data);
+      allow update: if isAdmin() && isValidIntegration(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow write: if isAuthenticated() && request.auth.uid == userId && 
+                     (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) || isAdmin());
+    }
+  }
+}
